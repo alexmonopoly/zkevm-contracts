@@ -40,49 +40,4 @@ contract PolygonZkEVMGlobalExitRoot is IPolygonZkEVMGlobalExitRoot {
         rollupAddress = _rollupAddress;
         bridgeAddress = _bridgeAddress;
     }
-
-    /**
-     * @notice Update the exit root of one of the networks and the global exit root
-     * @param newRoot new exit tree root
-     */
-    function updateExitRoot(bytes32 newRoot) external {
-        // Store storage variables into temporal variables since will be used multiple times
-        bytes32 cacheLastRollupExitRoot = lastRollupExitRoot;
-        bytes32 cacheLastMainnetExitRoot = lastMainnetExitRoot;
-
-        if (msg.sender == bridgeAddress) {
-            lastMainnetExitRoot = newRoot;
-            cacheLastMainnetExitRoot = newRoot;
-        } else if (msg.sender == rollupAddress) {
-            lastRollupExitRoot = newRoot;
-            cacheLastRollupExitRoot = newRoot;
-        } else {
-            revert OnlyAllowedContracts();
-        }
-
-        bytes32 newGlobalExitRoot = GlobalExitRootLib.calculateGlobalExitRoot(
-            cacheLastMainnetExitRoot,
-            cacheLastRollupExitRoot
-        );
-
-        // If it already exists, do not modify the timestamp
-        if (globalExitRootMap[newGlobalExitRoot] == 0) {
-            globalExitRootMap[newGlobalExitRoot] = block.timestamp;
-            emit UpdateGlobalExitRoot(
-                cacheLastMainnetExitRoot,
-                cacheLastRollupExitRoot
-            );
-        }
-    }
-
-    /**
-     * @notice Return last global exit root
-     */
-    function getLastGlobalExitRoot() public view returns (bytes32) {
-        return
-            GlobalExitRootLib.calculateGlobalExitRoot(
-                lastMainnetExitRoot,
-                lastRollupExitRoot
-            );
-    }
 }
